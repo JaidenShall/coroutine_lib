@@ -1,5 +1,8 @@
 {
     "files.associations": {
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "memory": "cpp",
+        "functional": "cpp",
+        "condition_variable": "cpp"
     }
 }
