@@ -25,15 +25,15 @@ m_useCaller(use_caller), m_name(name)
 
 	Thread::SetName(m_name);
 
-	// 使用主线程当作工作线程（メインスレッドをワーカースレッドとして使う）
+	// メインスレッドをワーカースレッドとして使う
 	if(use_caller)
 	{
 		threads --;
 
-		// 创建主协程（メインファイバーを作成する）
+		// メインファイバーを作成する
 		Fiber::GetThis();
 
-		// 创建调度协程（スケジューラファイバーを作成する）
+		// スケジューラファイバーを作成する
 		m_schedulerFiber.reset(new Fiber(std::bind(&Scheduler::run, this), 0, false)); // false -> 该调度协程退出后将返回主协程
 		Fiber::SetSchedulerFiber(m_schedulerFiber.get());
 		
@@ -83,7 +83,7 @@ void Scheduler::run()
 
 	SetThis();
 
-	// 运行在新创建的线程 -> 需要创建主协程
+	
 	if(thread_id != m_rootThread)
 	{
 		Fiber::GetThis();
@@ -100,7 +100,7 @@ void Scheduler::run()
 		{
 			std::lock_guard<std::mutex> lock(m_mutex);
 			auto it = m_tasks.begin();
-			// 1 遍历任务队列（1 タスクキューを巡回する）
+			// 1 タスクキューを巡回する
 			while(it!=m_tasks.end())
 			{
 				if(it->thread!=-1&&it->thread!=thread_id)
@@ -110,7 +110,7 @@ void Scheduler::run()
 					continue;
 				}
 
-				// 2 取出任务（2 タスクを取り出す）
+				// 2 タスクを取り出す
 				assert(it->fiber||it->cb);
 				task = *it;
 				m_tasks.erase(it); 
@@ -125,7 +125,7 @@ void Scheduler::run()
 			tickle();
 		}
 
-		// 3 执行任务（3 タスクを実行する）
+		// 3 タスクを実行する
 		if(task.fiber)
 		{
 			{					
@@ -148,10 +148,10 @@ void Scheduler::run()
 			m_activeThreadCount--;
 			task.reset();	
 		}
-		// 4 无任务 -> 执行空闲协程（4 タスクがない -> アイドルファイバーを実行する）
+		// 4 タスクがない -> アイドルファイバーを実行する
 		else
 		{		
-			// 系统关闭 -> idle协程将从死循环跳出并结束 -> 此时的idle协程状态为TERM -> 再次进入将跳出循环并退出run()（システム終了 -> アイドルファイバーがループを抜けて終了する -> 状態はTERM -> 再実行時にrun()を終了する）
+			// システム終了 -> アイドルファイバーがループを抜けて終了する -> 状態はTERM -> 再実行時にrun()を終了する
             if (idle_fiber->getState() == Fiber::TERM) 
             {
             	if(debug) std::cout << "Schedule::run() ends in thread: " << thread_id << std::endl;
