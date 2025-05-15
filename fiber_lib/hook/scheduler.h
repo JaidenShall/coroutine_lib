@@ -50,9 +50,9 @@ public:
     	}
     }
 	
-	// 启动线程池
+	
 	virtual void start();
-	// 关闭线程池
+	
 	virtual void stop();	
 	
 protected:
