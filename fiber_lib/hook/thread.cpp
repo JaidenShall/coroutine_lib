@@ -6,7 +6,7 @@
 
 namespace sylar {
 
-// 线程信息（スレッド情報）
+// スレッド情報
 static thread_local Thread* t_thread          = nullptr;
 static thread_local std::string t_thread_name = "UNKNOWN";
 
@@ -43,7 +43,7 @@ m_cb(cb), m_name(name)
         std::cerr << "pthread_create thread fail, rt=" << rt << " name=" << name;
         throw std::logic_error("pthread_create error");
     }
-    // 等待线程函数完成初始化（スレッド関数の初期化完了を待つ）
+    // スレッド関数の初期化完了を待つ
     m_semaphore.wait();
 }
 
@@ -80,9 +80,9 @@ void* Thread::run(void* arg)
     pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
 
     std::function<void()> cb;
-    cb.swap(thread->m_cb); // swap -> 可以减少m_cb中只能指针的引用计数（swap -> m_cbのスマートポインタの参照カウントを減らせる）
+    cb.swap(thread->m_cb); // swap -> m_cbのスマートポインタの参照カウントを減らせる
     
-    // 初始化完成（初期化完了）
+    // 初期化完了
     thread->m_semaphore.signal();
 
     cb();
