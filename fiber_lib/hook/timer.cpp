@@ -23,7 +23,7 @@ bool Timer::cancel()
     return true;
 }
 
-// refresh 只会向后调整（refresh は後ろにしか移動しない）
+// refresh は後ろにしか移動しない
 bool Timer::refresh() 
 {
     std::unique_lock<std::shared_mutex> write_lock(m_manager->m_mutex);
@@ -68,11 +68,11 @@ bool Timer::reset(uint64_t ms, bool from_now)
         m_manager->m_timers.erase(it); 
     }
 
-    // reinsert（再挿入）
+    // 再挿入
     auto start = from_now ? std::chrono::system_clock::now() : m_next - std::chrono::milliseconds(m_ms);
     m_ms = ms;
     m_next = start + std::chrono::milliseconds(m_ms);
-    m_manager->addTimer(shared_from_this()); // insert with lock（ロック付きで挿入する）
+    m_manager->addTimer(shared_from_this()); // insert with lock
     return true;
 }
 
@@ -105,7 +105,7 @@ std::shared_ptr<Timer> TimerManager::addTimer(uint64_t ms, std::function<void()>
     return timer;
 }
 
-// 如果条件存在 -> 执行cb()（条件が存在すれば -> cb() を実行）
+// 条件が存在すれば -> cb() を実行
 static void OnTimer(std::weak_ptr<void> weak_cond, std::function<void()> cb)
 {
     std::shared_ptr<void> tmp = weak_cond.lock();
@@ -129,7 +129,7 @@ uint64_t TimerManager::getNextTimer()
     
     if (m_timers.empty())
     {
-        // 返回最大值（最大値を返す）
+        // 最大値を返す
         return ~0ull;
     }
 
@@ -138,7 +138,7 @@ uint64_t TimerManager::getNextTimer()
 
     if(now>=time)
     {
-        // 已经有timer超时（すでにタイマーがタイムアウトしている）
+        // すでにタイマーがタイムアウトしている
         return 0;
     }
     else
@@ -156,7 +156,7 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs)
 
     bool rollover = detectClockRollover();
     
-    // 回退 -> 清理所有timer || 超时 -> 清理超时timer（巻き戻し -> すべてのタイマーを削除 || タイムアウト -> タイムアウトしたタイマーを削除）
+    // 巻き戻し -> すべてのタイマーを削除 || タイムアウト -> タイムアウトしたタイマーを削除
     while (!m_timers.empty() && rollover || !m_timers.empty() && (*m_timers.begin())->m_next <= now)
     {
         std::shared_ptr<Timer> temp = *m_timers.begin();
@@ -166,13 +166,13 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>>& cbs)
 
         if (temp->m_recurring)
         {
-            // 重新加入时间堆（時間ヒープに再追加）
+            // 時間ヒープに再追加
             temp->m_next = now + std::chrono::milliseconds(temp->m_ms);
             m_timers.insert(temp);
         }
         else
         {
-            // 清理cb（cb を削除）
+            // cb を削除
             temp->m_cb = nullptr;
         }
     }
@@ -184,7 +184,7 @@ bool TimerManager::hasTimer()
     return !m_timers.empty();
 }
 
-// lock + tickle()（ロック + tickle()）
+// lock + tickle()
 void TimerManager::addTimer(std::shared_ptr<Timer> timer)
 {
     bool at_front = false;
@@ -202,7 +202,7 @@ void TimerManager::addTimer(std::shared_ptr<Timer> timer)
    
     if(at_front)
     {
-        // wake up（起こす） 
+        // wake up
         onTimerInsertedAtFront();
     }
 }
